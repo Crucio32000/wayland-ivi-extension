@@ -83,7 +83,7 @@ install(
     DESTINATION share/wayland-protocols/stable/ivi-application
 )
 
-SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES VERSION ${ILM_API_VERSION} SOVERSION ${ILM_API_VERSION})
+SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES VERSION ${ILM_API_VERSION} SOVERSION ${ILM_API_MAJOR_VERSION})
 
 #=============================================================================================
 # generate pkg-config file for ivi-application API

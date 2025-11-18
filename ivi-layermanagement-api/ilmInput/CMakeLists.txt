@@ -88,7 +88,7 @@ install (
     DESTINATION include/ilm
 )
 
-SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES VERSION ${ILM_API_VERSION} SOVERSION ${ILM_API_VERSION})
+SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES VERSION ${ILM_API_VERSION} SOVERSION ${ILM_API_MAJOR_VERSION})
 
 
 #=============================================================================================
