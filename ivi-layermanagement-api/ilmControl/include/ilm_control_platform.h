@@ -47,6 +47,8 @@ struct wayland_context {
 
     struct ivi_input *input_controller;
 
+    struct ivi_input_policy *art_input_policy_controller;
+
     struct wl_shm *wl_shm;
     bool has_argb8888;
 };

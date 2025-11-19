@@ -37,6 +37,7 @@
 #include "wayland-util.h"
 #include "ivi-wm-client-protocol.h"
 #include "ivi-input-client-protocol.h"
+#include "ivi-input-policy-client-protocol.h"
 
 struct layer_context {
     struct wl_list link;
@@ -948,6 +949,14 @@ registry_handle_control(void *data,
         }
         ivi_input_add_listener(ctx->input_controller, &input_listener, ctx);
 
+    } else if (strcmp(interface, "ivi_input_policy") == 0) {
+        ctx->art_input_policy_controller =
+            wl_registry_bind(registry, name, &ivi_input_policy_interface, 1);
+
+        if (ctx->art_input_policy_controller == NULL) {
+            fprintf(stderr, "Failed to registry bind input policy\n");
+            return;
+        }
     } else if (strcmp(interface, "wl_output") == 0) {
         struct screen_context *ctx_scrn = calloc(1, sizeof *ctx_scrn);
 
@@ -1102,6 +1111,11 @@ static void destroy_control_resources(void)
     if (ctx->wl.input_controller) {
         ivi_input_destroy(ctx->wl.input_controller);
         ctx->wl.input_controller = NULL;
+    }
+
+    if (ctx->wl.art_input_policy_controller) {
+        ivi_input_policy_destroy(ctx->wl.art_input_policy_controller);
+        ctx->wl.art_input_policy_controller = NULL;
     }
 
     if (ctx->wl.queue) {

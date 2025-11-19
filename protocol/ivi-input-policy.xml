@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<protocol name="ivi_art_input_policy">
+<protocol name="ivi_input_policy">
     <copyright>
     Copyright (c) 2015 Codethink Ltd
 
@@ -21,7 +21,7 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     THE SOFTWARE.
     </copyright>
-    <interface name="ivi_art_input_policy" version="1">
+    <interface name="ivi_input_policy" version="1">
         <description summary="controller interface to the input system">
             Handles input regions for surfaces in the IVI compositor.
         </description>

@@ -19,7 +19,7 @@
 
 cmake_minimum_required (VERSION 2.6...3.22)
 
-project(ivi-art-input-policy-controller)
+project(ivi-input-policy-controller)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(WAYLAND_SERVER wayland-server REQUIRED)
@@ -33,19 +33,19 @@ GET_TARGET_PROPERTY(IVI_CONTROLLER_INCLUDE_DIRS ivi-controller INCLUDE_DIRECTORI
 find_program(WAYLAND_SCANNER_EXECUTABLE NAMES wayland-scanner)
 
 add_custom_command(
-    OUTPUT  ivi-art-input-policy-server-protocol.h
+    OUTPUT  ivi-input-policy-server-protocol.h
     COMMAND ${WAYLAND_SCANNER_EXECUTABLE} server-header
-            < ${CMAKE_SOURCE_DIR}/protocol/ivi-art-input-policy.xml
-            > ${CMAKE_CURRENT_BINARY_DIR}/ivi-art-input-policy-server-protocol.h
-    DEPENDS ${CMAKE_SOURCE_DIR}/protocol/ivi-art-input-policy.xml
+            < ${CMAKE_SOURCE_DIR}/protocol/ivi-input-policy.xml
+            > ${CMAKE_CURRENT_BINARY_DIR}/ivi-input-policy-server-protocol.h
+    DEPENDS ${CMAKE_SOURCE_DIR}/protocol/ivi-input-policy.xml
 )
 
 add_custom_command(
-    OUTPUT  ivi-art-input-policy-protocol.c
+    OUTPUT  ivi-input-policy-protocol.c
     COMMAND ${WAYLAND_SCANNER_EXECUTABLE} code
-            < ${CMAKE_SOURCE_DIR}/protocol/ivi-art-input-policy.xml
-            > ${CMAKE_CURRENT_BINARY_DIR}/ivi-art-input-policy-protocol.c
-    DEPENDS ${CMAKE_SOURCE_DIR}/protocol/ivi-art-input-policy.xml
+            < ${CMAKE_SOURCE_DIR}/protocol/ivi-input-policy.xml
+            > ${CMAKE_CURRENT_BINARY_DIR}/ivi-input-policy-protocol.c
+    DEPENDS ${CMAKE_SOURCE_DIR}/protocol/ivi-input-policy.xml
 )
 
 include_directories(
@@ -66,9 +66,9 @@ link_directories(
 
 
 add_library(${PROJECT_NAME} MODULE
-    src/ivi-art-input-policy-controller.c
-    ivi-art-input-policy-server-protocol.h
-    ivi-art-input-policy-protocol.c
+    src/ivi-input-policy-controller.c
+    ivi-input-policy-server-protocol.h
+    ivi-input-policy-protocol.c
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")

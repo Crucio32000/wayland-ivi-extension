@@ -62,6 +62,22 @@ add_custom_command(
     DEPENDS ${CMAKE_SOURCE_DIR}/protocol/ivi-input.xml
 )
 
+add_custom_command(
+    OUTPUT  ivi-input-policy-client-protocol.h
+    COMMAND ${WAYLAND_SCANNER_EXECUTABLE} client-header
+            < ${CMAKE_SOURCE_DIR}/protocol/ivi-input-policy.xml
+            > ${CMAKE_CURRENT_BINARY_DIR}/ivi-input-policy-client-protocol.h
+    DEPENDS ${CMAKE_SOURCE_DIR}/protocol/ivi-input-policy.xml
+)
+
+add_custom_command(
+    OUTPUT  ivi-input-policy-protocol.c
+    COMMAND ${WAYLAND_SCANNER_EXECUTABLE} code
+            < ${CMAKE_SOURCE_DIR}/protocol/ivi-input-policy.xml
+            > ${CMAKE_CURRENT_BINARY_DIR}/ivi-input-policy-protocol.c
+    DEPENDS ${CMAKE_SOURCE_DIR}/protocol/ivi-input-policy.xml
+)
+
 include_directories(
     include
     ${ILM_COMMON_INCLUDE_DIRS}
@@ -81,6 +97,8 @@ add_library(${PROJECT_NAME} SHARED
     ivi-wm-protocol.c
     ivi-input-client-protocol.h
     ivi-input-protocol.c
+    ivi-input-policy-client-protocol.h
+    ivi-input-policy-protocol.c
 )
 
 set(LIBS

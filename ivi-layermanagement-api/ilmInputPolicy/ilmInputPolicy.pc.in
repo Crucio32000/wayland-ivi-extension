@@ -3,10 +3,10 @@ exec_prefix=${prefix}
 libdir=${exec_prefix}/@CMAKE_INSTALL_LIBDIR@
 includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@/ilm
 
-Name: ilmArtInputPolicy
-Description: Library for ilm Art input Policy handling
+Name: ilmInputPolicy
+Description: Library for ilm input Policy handling
 Version: @ILM_API_VERSION@
 Requires: ilmCommon
 Requires.private: wayland-client ilmControl
-Libs: -L${libdir} -lilmArtInputPolicy
+Libs: -L${libdir} -lilmInputPolicy
 Cflags: -I${includedir}

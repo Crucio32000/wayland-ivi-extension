@@ -1,25 +1,18 @@
-/*
- * Copyright 2015 Codethink Ltd
- * Copyright (C) 2015 Advanced Driver Information Technology Joint Venture GmbH
- *
- * Permission to use, copy, modify, distribute, and sell this software and
- * its documentation for any purpose is hereby granted without fee, provided
- * that the above copyright notice appear in all copies and that both that
- * copyright notice and this permission notice appear in supporting
- * documentation, and that the name of the copyright holders not be used in
- * advertising or publicity pertaining to distribution of the software
- * without specific, written prior permission.  The copyright holders make
- * no representations about the suitability of this software for any
- * purpose.  It is provided "as is" without express or implied warranty.
- *
- * THE COPYRIGHT HOLDERS DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
- * SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS, IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY
- * SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER
- * RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
- * CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
- * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
+/** @file       ivi-input-policy-controller.h
+*   @brief      Module ivi-input-policy-controller - Implementation
+*     
+*   @author     Domenico Nicita
+*     
+*   @copyright
+*               Copyright 2025 - ART spa.
+*               All rights reserved.
+*               This file is copyrighted and the property of ART spa.
+*               It contains confidential and proprietary information. Any copies of
+*               this file (in whole or in part) may only be used subject to prior
+*               written permission from ART spa.
+*
+*   @note       Module based on the Template "SWC_Template_C_Language" version "1.1.0"
+***********************************************************************************************************************/
 
 #include <stdlib.h>
 #include <string.h>
@@ -34,11 +27,11 @@
 #include <libweston/plugin-registry.h>
 #include "ilm_types.h"
 
-#include "ivi-art-input-policy-server-protocol.h"
+#include "ivi-input-policy-server-protocol.h"
 #include "ivi-controller.h"
 
 #define PRIV_WLOG(fmt, ...) \
-    weston_log("ivi-art-input-policy-controller: " fmt, ##__VA_ARGS__)
+    weston_log("ivi-input-policy-controller: " fmt, ##__VA_ARGS__)
 
 struct art_input_policy_context {
     struct ivishell* ivishell;
@@ -50,6 +43,10 @@ struct art_input_policy_context {
     struct wl_list resource_list;   /* Resource is a client that bound to our controller */
 
     struct wl_event_source *debug_timer;
+    uint8_t debug_timer_enabled;
+    uint32_t debug_timer_interval_ms; /* in milliseconds */
+
+    uint8_t request_log_enabled;
 };
 
 static void input_policy_controller_deinit(struct art_input_policy_context *ctx) {
@@ -59,7 +56,7 @@ static void input_policy_controller_deinit(struct art_input_policy_context *ctx)
         wl_list_remove(&ctx->surface_destroyed.link);
         wl_list_remove(&ctx->shell_destroy_listener.link);
 
-        if (ctx->debug_timer) {
+        if (ctx->debug_timer != NULL) {
             wl_event_source_remove(ctx->debug_timer);
         }
 
@@ -161,6 +158,28 @@ get_west_surface_from_id(struct art_input_policy_context *ctx,
     return west_surf;
 }
 
+static void dump_input_region_from_surface(struct weston_surface *w_surf, uint8_t dump_current_region)
+{
+    pixman_region32_t *input_region;
+    pixman_box32_t *rects;
+    int n_rects, i;
+
+    if (dump_current_region) {
+        input_region = &w_surf->input;
+    } else {
+        input_region = &w_surf->pending.input;
+    }
+
+    rects = pixman_region32_rectangles(input_region, &n_rects);
+    
+    PRIV_WLOG("   %s Input region: %d rectangle(s)\n", dump_current_region ? "Current" : "Pending", n_rects);
+    for (i = 0; i < n_rects; i++) {
+        PRIV_WLOG("     Rect %d: x1=%d, y1=%d, x2=%d, y2=%d (width=%d, height=%d)\n",
+                  i, rects[i].x1, rects[i].y1, rects[i].x2, rects[i].y2,
+                  rects[i].x2 - rects[i].x1, rects[i].y2 - rects[i].y1);
+    }
+}
+
 static int debug_timer_callback(void *data)
 {
     struct art_input_policy_context *ctx = (struct art_input_policy_context *)data;
@@ -178,44 +197,45 @@ static int debug_timer_callback(void *data)
         PRIV_WLOG(" Surface %p (weston surface %p) (SID: %u) Type %d\n",
                   surf, w_surf, surf_id, surf->type);
 
-        if (w_surf != NULL) {
-            pixman_region32_t *input_region = &w_surf->input;
-            pixman_box32_t *rects;
-            int n_rects, i;
-
-            rects = pixman_region32_rectangles(input_region, &n_rects);
-            
-            PRIV_WLOG("   Input region: %d rectangle(s)\n", n_rects);
-            for (i = 0; i < n_rects; i++) {
-                PRIV_WLOG("     Rect %d: x1=%d, y1=%d, x2=%d, y2=%d (width=%d, height=%d)\n",
-                          i, rects[i].x1, rects[i].y1, rects[i].x2, rects[i].y2,
-                          rects[i].x2 - rects[i].x1, rects[i].y2 - rects[i].y1);
-            }
-
-            /* Debug. For surface with ID = 20, lets tune the input behavior */
-            if (surf_id == 20) {
-                PRIV_WLOG("   Resetting input policy for surface ID 20\n");
-                
-                /* Clear the pending input region and set a single box */
-                pixman_region32_fini(&w_surf->pending.input);
-                pixman_region32_init(&w_surf->pending.input);
-                
-                /* Add a single box: x=100, y=100, width=200, height=150 */
-                pixman_region32_union_rect(&w_surf->pending.input, 
-                                          &w_surf->pending.input,
-                                          100, 100,  /* x, y */
-                                          200, 150); /* width, height */
-                
-                /* Commit the changes */
-                w_surf->pending.status |= WESTON_SURFACE_DIRTY_INPUT;
-                ctx->ivishell->interface->commit_changes();
-            }
+        if (w_surf != NULL) {            
+            dump_input_region_from_surface(w_surf, 1); /* current region */
         }
     }
-    wl_event_source_timer_update(ctx->debug_timer, 5000); /* 5 seconds */
+    /* Refresh timer */
+    wl_event_source_timer_update(ctx->debug_timer, ctx->debug_timer_interval_ms);
     return 1;
 }
 
+static void read_config_from_weston(struct art_input_policy_context *ctx)
+{
+    /* Check weston config */
+    struct weston_config *config = wet_get_config(ctx->ivishell->compositor);
+    struct weston_config_section *section;
+
+    section = weston_config_get_section(config, "ivi-input-policy-controller", NULL, NULL);
+    if (section != NULL) {
+        int enabled = 0;
+        int interval_ms = 5000; /* default 5 seconds */
+
+        if (weston_config_section_get_int(section,
+                    "debug_timer_enabled", &enabled, 0) == 0) {
+            ctx->debug_timer_enabled = (enabled != 0) ? 1 : 0;
+        }
+
+        if (weston_config_section_get_int(section,
+                    "debug_timer_interval_ms", &interval_ms, 5000) == 0) {
+            ctx->debug_timer_interval_ms = (uint32_t)interval_ms;
+        }
+
+        if (weston_config_section_get_int(section,
+                    "request_log_enabled", &enabled, 0) == 0) {
+            ctx->request_log_enabled = (enabled != 0) ? 1 : 0;
+        }
+    } else {
+        PRIV_WLOG("No ivi-input-policy-controller section in weston config. Using default values.\n");
+    }
+
+}
 
 static struct art_input_policy_context * create_context(struct ivishell *shell)
 {
@@ -240,16 +260,24 @@ static struct art_input_policy_context * create_context(struct ivishell *shell)
     ctx->ivishell->interface->shell_add_destroy_listener_once(
             &ctx->shell_destroy_listener, input_policy_controller_destroy);
 
-    /* Debug Timer to iterate over the surfaces */
-    loop = wl_display_get_event_loop(shell->compositor->wl_display);
-    ctx->debug_timer = wl_event_loop_add_timer(loop, debug_timer_callback, ctx);
-    if (ctx->debug_timer != NULL) {
-        wl_event_source_timer_update(ctx->debug_timer, 5000); /* 5 seconds */
-    } else {
-        PRIV_WLOG("Failed to create debug timer\n");
-    }
+    /* Check weston config */
+    read_config_from_weston(ctx);
 
-    wl_list_init(&ctx->resource_list);
+    /* Check if we need to enable debug timer */
+    if (ctx->debug_timer_enabled) {
+        PRIV_WLOG("Debug timer enabled, interval %u ms\n",
+                  ctx->debug_timer_interval_ms);
+
+        loop = wl_display_get_event_loop(shell->compositor->wl_display);
+        ctx->debug_timer = wl_event_loop_add_timer(loop, debug_timer_callback, ctx);
+        if (ctx->debug_timer != NULL) {
+            wl_event_source_timer_update(ctx->debug_timer, ctx->debug_timer_interval_ms);
+        } else {
+            PRIV_WLOG("Failed to create debug timer\n");
+        }
+    } else {
+        PRIV_WLOG("Debug timer disabled\n");
+    }
 
     return ctx;
 }
@@ -269,7 +297,16 @@ void impl_add_input_rectangle(struct wl_client *client,
     struct art_input_policy_context *ctx = wl_resource_get_user_data(resource);
     struct weston_surface *west_surf = get_west_surface_from_id(ctx, surface_id);
 
+    if (ctx->request_log_enabled) {
+        PRIV_WLOG("Client requested to add input rectangle to surface ID %u: x=%d, y=%d, width=%d, height=%d\n",
+                  surface_id, x, y, width, height);
+    }
+
     /* Add input rectangle*/
+    /* Verify region is already initialized, otherwise do it now */
+    if (pixman_region32_not_empty(&west_surf->pending.input) == 0) {
+        pixman_region32_init(&west_surf->pending.input);
+    }
     pixman_region32_union_rect(&west_surf->pending.input,
                                &west_surf->pending.input,
                                x, y, width, height);
@@ -282,6 +319,10 @@ void impl_clear_input_regions(struct wl_client *client,
     struct art_input_policy_context *ctx = wl_resource_get_user_data(resource);
     struct weston_surface *west_surf = get_west_surface_from_id(ctx, surface_id);
 
+    if (ctx->request_log_enabled) {
+        PRIV_WLOG("Client requested to clear input regions for surface ID %u\n", surface_id);
+    }
+
     /* Clear input region */
     pixman_region32_fini(&west_surf->pending.input);
     pixman_region32_init(&west_surf->pending.input);
@@ -293,6 +334,10 @@ void impl_reset_input_region(struct wl_client *client,
 {
     struct art_input_policy_context *ctx = wl_resource_get_user_data(resource);
     struct weston_surface *west_surf = get_west_surface_from_id(ctx, surface_id);
+
+    if (ctx->request_log_enabled) {
+        PRIV_WLOG("Client requested to reset input region for surface ID %u\n", surface_id);
+    }
 
     /* Reset input region to full surface */
     /* Snippet taken from libweston/compositor.c */
@@ -307,13 +352,18 @@ void impl_commit_input_region(struct wl_client *client,
 {
     struct art_input_policy_context *ctx = wl_resource_get_user_data(resource);
     struct weston_surface *west_surf = get_west_surface_from_id(ctx, surface_id);
+
+    if (ctx->request_log_enabled) {
+        PRIV_WLOG("Client requested to commit input region changes for surface ID %u\n", surface_id);
+        dump_input_region_from_surface(west_surf, 0); /* pending region */
+    }
     
     /* Commit the changes by indicating that pending region is DIRTY */
     west_surf->pending.status |= WESTON_SURFACE_DIRTY_INPUT;
     ctx->ivishell->interface->commit_changes();
 }
 
-static const struct ivi_art_input_policy_interface art_input_implementation = {
+static const struct ivi_input_policy_interface art_input_implementation = {
     .add_input_rectangle = impl_add_input_rectangle,
     .clear_input_regions = impl_clear_input_regions,
     .reset_input_region = impl_reset_input_region,
@@ -327,7 +377,7 @@ unbind_resource_controller(struct wl_resource *resource)
 }
 
 static void
-bind_ivi_art_input_policy(struct wl_client *client, void *data,
+bind_ivi_input_policy(struct wl_client *client, void *data,
                uint32_t version, uint32_t id)
 {
     struct art_input_policy_context *ctx = (struct art_input_policy_context *)data;
@@ -337,7 +387,7 @@ bind_ivi_art_input_policy(struct wl_client *client, void *data,
 
     /* Implementation based on https://wayland-book.com/registry/server-side.html */
     resource = wl_resource_create(client,
-                                  &ivi_art_input_policy_interface,
+                                  &ivi_input_policy_interface,
                                   1, id);
     
     /* Set Implementation */
@@ -355,17 +405,19 @@ art_input_policy_module_init(struct ivishell *shell)
     int ret = -1;
     struct art_input_policy_context *ctx = NULL;
 
-    PRIV_WLOG("ivi-art-input-policy-controller module hello world!\n");
-
     ctx = create_context(shell);
 
     if (ctx != NULL) {
+        /* Initialize Resource List (Remote Clients) */
+        wl_list_init(&ctx->resource_list);
+
+        /* Create Wayland Global for ivi_input_policy */
         if (wl_global_create(shell->compositor->wl_display,
-                              &ivi_art_input_policy_interface, 1,
-                              ctx, bind_ivi_art_input_policy) != NULL) {
+                              &ivi_input_policy_interface, 1,
+                              ctx, bind_ivi_input_policy) != NULL) {
             ret = 0;
         } else {
-            PRIV_WLOG("Failed to create ivi_art_input_policy global\n");
+            PRIV_WLOG("Failed to create ivi_input_policy global\n");
         }
     }
 

@@ -4,7 +4,7 @@
 *.pdf
 *build*
 
-# ART
+
 .vscode/
 CMakeUserPresets.json
 conanfile*

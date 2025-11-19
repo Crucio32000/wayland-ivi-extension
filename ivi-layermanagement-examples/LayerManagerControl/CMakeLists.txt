@@ -24,6 +24,7 @@ include_directories(
     "${CMAKE_SOURCE_DIR}/ivi-layermanagement-api/ilmCommon/include"
     "${CMAKE_SOURCE_DIR}/ivi-layermanagement-api/ilmControl/include"
     "${CMAKE_SOURCE_DIR}/ivi-layermanagement-api/ilmInput/include"
+    "${CMAKE_SOURCE_DIR}/ivi-layermanagement-api/ilmInputPolicy/include"
     ${WAYLAND_CLIENT_INCLUDE_DIRS}
 )
 
@@ -35,6 +36,7 @@ SET(LIBS
     ilmCommon
     ilmControl
     ilmInput
+    ilmInputPolicy
 )
 
 SET(SRC_FILES
@@ -49,6 +51,7 @@ SET(SRC_FILES
     src/print.cpp
     src/sceneio.cpp
     src/util.cpp
+    src/input_policy_commands.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SRC_FILES})

@@ -25,7 +25,7 @@ extern "C" {
 
 #include "ilm_common.h"
 
-struct ilmArtInputPolicyRegion
+struct ilmInputPolicyRegion
 {
     t_ilm_uint x;       /*!< x coordinate of the top-left corner of the rectangle */
     t_ilm_uint y;       /*!< y coordinate of the top-left corner of the rectangle */
@@ -37,7 +37,7 @@ struct ilmArtInputPolicyRegion
 
 /**
  * \brief      Set the surface's accepted seats to the list specified
- * \ingroup    ilmArtInputPolicy
+ * \ingroup    ilmInputPolicy
  * \param[in]  surfaceID   The target surface ID
  * \param[in]  x           The x coordinate of the top-left corner of the
  *                         rectangle to add
@@ -50,7 +50,7 @@ struct ilmArtInputPolicyRegion
  * \return     ILM_FAILED  if the client cannot call the method on the surface
  */
 ilmErrorTypes
-ilm_art_addInputRectangle(t_ilm_surface surfaceID,
+ilm_addInputRectangle(t_ilm_surface surfaceID,
                          t_ilm_int x,
                          t_ilm_int y,
                          t_ilm_uint width,
@@ -58,37 +58,37 @@ ilm_art_addInputRectangle(t_ilm_surface surfaceID,
 
 /**
  * \brief      Clear all input regions from the specified surface
- * \ingroup    ilmArtInputPolicy
+ * \ingroup    ilmInputPolicy
  * \param[in]  surfaceID   The target surface ID
  * 
  * \return     ILM_SUCCESS if the method call was successful
  * \return     ILM_FAILED  if the client cannot call the method on the surface
  */
 ilmErrorTypes
-ilm_art_clearInputRegions(t_ilm_surface surfaceID);
+ilm_clearInputRegions(t_ilm_surface surfaceID);
 
 /**
  * \brief      Reset the input region of the specified surface to the full
  *             surface area
- * \ingroup    ilmArtInputPolicy
+ * \ingroup    ilmInputPolicy
  * \param[in]  surfaceID   The target surface ID
  * 
  * \return     ILM_SUCCESS if the method call was successful
  * \return     ILM_FAILED  if the client cannot call the method on the surface
  */
 ilmErrorTypes
-ilm_art_resetInputRegions(t_ilm_surface surfaceID);
+ilm_resetInputRegions(t_ilm_surface surfaceID);
 
 /**
  * \brief      Commit the input region changes for the specified surface
- * \ingroup    ilmArtInputPolicy
+ * \ingroup    ilmInputPolicy
  * \param[in]  surfaceID   The target surface ID
  * 
  * \return     ILM_SUCCESS if the method call was successful
  * \return     ILM_FAILED  if the client cannot call the method on the surface
  */
 ilmErrorTypes
-ilm_art_commitInputRegion(t_ilm_surface surfaceID);
+ilm_commitInputRegion(t_ilm_surface surfaceID);
 
 #ifdef __cplusplus
 } /**/

@@ -2249,10 +2249,10 @@ static int load_art_input_policy_module(struct ivishell *shell)
 
     section = weston_config_get_section(config, "ivi-shell", NULL, NULL);
 
-    if (weston_config_section_get_string(section, "ivi-art-input-policy-module",
+    if (weston_config_section_get_string(section, "ivi-input-policy-module",
                                          &input_policy_module, NULL) < 0) {
         /* input policy shall follow weston default */
-        weston_log("ivi-controller: No ivi-art-input-policy-module set\n");
+        weston_log("ivi-controller: No ivi-input-policy-module set\n");
         return_code = 0;
     } else {
         input_policy_module_init = weston_load_module(input_policy_module, "art_input_policy_module_init", MODULEDIR);

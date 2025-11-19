@@ -20,7 +20,7 @@
 
 cmake_minimum_required (VERSION 2.6...3.22)
 
-project(ilmArtInputPolicy)
+project(ilmInputPolicy)
 
 find_package(Threads)
 find_package(PkgConfig REQUIRED)
@@ -31,19 +31,19 @@ GET_TARGET_PROPERTY(ILM_CONTROL_INCLUDE_DIRS ilmControl INCLUDE_DIRECTORIES)
 find_program(WAYLAND_SCANNER_EXECUTABLE NAMES wayland-scanner)
 
 add_custom_command(
-    OUTPUT  ivi-art-input-policy-client-protocol.h
+    OUTPUT  ivi-input-policy-client-protocol.h
     COMMAND ${WAYLAND_SCANNER_EXECUTABLE} client-header
-            < ${CMAKE_SOURCE_DIR}/protocol/ivi-art-input-policy.xml
-            > ${CMAKE_CURRENT_BINARY_DIR}/ivi-art-input-policy-client-protocol.h
-    DEPENDS ${CMAKE_SOURCE_DIR}/protocol/ivi-art-input-policy.xml
+            < ${CMAKE_SOURCE_DIR}/protocol/ivi-input-policy.xml
+            > ${CMAKE_CURRENT_BINARY_DIR}/ivi-input-policy-client-protocol.h
+    DEPENDS ${CMAKE_SOURCE_DIR}/protocol/ivi-input-policy.xml
 )
 
 add_custom_command(
-    OUTPUT  ivi-art-input-policy-protocol.c
+    OUTPUT  ivi-input-policy-protocol.c
     COMMAND ${WAYLAND_SCANNER_EXECUTABLE} code
-            < ${CMAKE_SOURCE_DIR}/protocol/ivi-art-input-policy.xml
-            > ${CMAKE_CURRENT_BINARY_DIR}/ivi-art-input-policy-protocol.c
-    DEPENDS ${CMAKE_SOURCE_DIR}/protocol/ivi-art-input-policy.xml
+            < ${CMAKE_SOURCE_DIR}/protocol/ivi-input-policy.xml
+            > ${CMAKE_CURRENT_BINARY_DIR}/ivi-input-policy-protocol.c
+    DEPENDS ${CMAKE_SOURCE_DIR}/protocol/ivi-input-policy.xml
 )
 
 include_directories(
@@ -58,9 +58,9 @@ link_directories(
 )
 
 add_library(${PROJECT_NAME} SHARED
-    src/ilm_art_input_policy.c
-    ivi-art-input-policy-client-protocol.h
-    ivi-art-input-policy-protocol.c
+    src/ilm_input_policy.c
+    ivi-input-policy-client-protocol.h
+    ivi-input-policy-protocol.c
 )
 
 add_dependencies(${PROJECT_NAME}
@@ -84,7 +84,7 @@ install (
 )
 
 install (
-    FILES       ${CMAKE_SOURCE_DIR}/ivi-layermanagement-api/ilmArtInputPolicy/include/ilm_art_input_policy.h
+    FILES       ${CMAKE_SOURCE_DIR}/ivi-layermanagement-api/ilmInputPolicy/include/ilm_input_policy.h
     DESTINATION include/ilm
 )
 
@@ -97,9 +97,9 @@ SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES VERSION ${ILM_API_VERSION} SOVE
 
 add_custom_target(ilm-art-input-policy-doc
                   COMMAND cat ${CMAKE_SOURCE_DIR}/doc/Doxyfile.template
-                          | sed 's/___DOC_NAME___/ilm_art_input_policy.h API/'
+                          | sed 's/___DOC_NAME___/ilm_input_policy.h API/'
                           | sed 's/___DOC_VERSION___/${ILM_API_VERSION}/'
-                          | sed 's!___INPUT_FILE___!${CMAKE_SOURCE_DIR}/ivi-layermanagement-api/ilmCommon/include/ilm_common.h ${CMAKE_CURRENT_SOURCE_DIR}/include/ilm_art_input_policy.h!'
+                          | sed 's!___INPUT_FILE___!${CMAKE_SOURCE_DIR}/ivi-layermanagement-api/ilmCommon/include/ilm_common.h ${CMAKE_CURRENT_SOURCE_DIR}/include/ilm_input_policy.h!'
                           | sed 's/___OUTPUT_DIR___/ilm-art-input-policy-doc/'
                           | doxygen -
                   COMMAND make --silent -C ilm-art-input-policy-doc/latex
@@ -113,12 +113,12 @@ add_custom_target(ilm-art-input-policy-doc
 #=============================================================================================
 
 configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/ilmArtInputPolicy.pc.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/ilmArtInputPolicy.pc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/ilmInputPolicy.pc.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/ilmInputPolicy.pc"
     @ONLY
 )
 
 install(
-    FILES "${CMAKE_CURRENT_BINARY_DIR}/ilmArtInputPolicy.pc"
+    FILES "${CMAKE_CURRENT_BINARY_DIR}/ilmInputPolicy.pc"
     DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig"
 )

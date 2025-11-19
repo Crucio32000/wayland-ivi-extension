@@ -21,8 +21,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ivi-art-input-policy-client-protocol.h"
-#include "ilm_art_input_policy.h"
+#include "ivi-input-policy-client-protocol.h"
+#include "ilm_input_policy.h"
 #include "ilm_control_platform.h"
 
 extern struct ilm_control_context ilm_context;
@@ -45,7 +45,7 @@ static int verify_surface_id_exists(struct ilm_control_context *ctx,
 }
 
 ILM_EXPORT ilmErrorTypes
-ilm_art_addInputRectangle(t_ilm_surface surfaceID,
+ilm_addInputRectangle(t_ilm_surface surfaceID,
                          t_ilm_int x,
                          t_ilm_int y,
                          t_ilm_uint width,
@@ -63,7 +63,7 @@ ilm_art_addInputRectangle(t_ilm_surface surfaceID,
     } else {
 
         /* Surface found. Lets forward the request to the compositor */
-        ivi_art_input_policy_add_input_rectangle(
+        ivi_input_policy_add_input_rectangle(
             ctx->wl.art_input_policy_controller,
             surfaceID,
             x,
@@ -81,7 +81,7 @@ ilm_art_addInputRectangle(t_ilm_surface surfaceID,
 }
 
 ILM_EXPORT ilmErrorTypes
-ilm_art_clearInputRegions(t_ilm_surface surfaceID) {
+ilm_clearInputRegions(t_ilm_surface surfaceID) {
     struct ilm_control_context *ctx;
     ilmErrorTypes returnValue = ILM_FAILED;
 
@@ -94,7 +94,7 @@ ilm_art_clearInputRegions(t_ilm_surface surfaceID) {
     } else {
 
         /* Surface found. Lets forward the request to the compositor */
-        ivi_art_input_policy_clear_input_regions(
+        ivi_input_policy_clear_input_regions(
             ctx->wl.art_input_policy_controller,
             surfaceID
         );
@@ -108,7 +108,7 @@ ilm_art_clearInputRegions(t_ilm_surface surfaceID) {
 }
 
 ILM_EXPORT ilmErrorTypes
-ilm_art_resetInputRegions(t_ilm_surface surfaceID) {
+ilm_resetInputRegions(t_ilm_surface surfaceID) {
     struct ilm_control_context *ctx;
     ilmErrorTypes returnValue = ILM_FAILED;
 
@@ -121,7 +121,7 @@ ilm_art_resetInputRegions(t_ilm_surface surfaceID) {
     } else {
 
         /* Surface found. Lets forward the request to the compositor */
-        ivi_art_input_policy_reset_input_region(
+        ivi_input_policy_reset_input_region(
             ctx->wl.art_input_policy_controller,
             surfaceID
         );
@@ -135,7 +135,7 @@ ilm_art_resetInputRegions(t_ilm_surface surfaceID) {
 }
 
 ILM_EXPORT ilmErrorTypes
-ilm_art_commitInputRegion(t_ilm_surface surfaceID) {
+ilm_commitInputRegion(t_ilm_surface surfaceID) {
     struct ilm_control_context *ctx;
     ilmErrorTypes returnValue = ILM_FAILED;
 
@@ -148,7 +148,7 @@ ilm_art_commitInputRegion(t_ilm_surface surfaceID) {
     } else {
 
         /* Surface found. Lets forward the request to the compositor */
-        ivi_art_input_policy_commit_input_region(
+        ivi_input_policy_commit_input_region(
             ctx->wl.art_input_policy_controller,
             surfaceID
         );
