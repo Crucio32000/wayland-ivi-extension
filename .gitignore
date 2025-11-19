@@ -3,3 +3,10 @@
 *patch
 *.pdf
 *build*
+
+# ART
+.vscode/
+CMakeUserPresets.json
+conanfile*
+shell_utils.py
+weston-ivi.ini

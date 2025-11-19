@@ -888,7 +888,7 @@ set_bkgnd_surface_prop(struct ivishell *shell)
         dest_width = output->pos.c.x + output->width;
         if (output->height > dest_height)
             dest_height = output->height;
-        weston_log("set_bkgnd_surface_prop: o_name:%s x:%d y:%d o_width:%d o_height:%d\n",
+        weston_log("set_bkgnd_surface_prop: o_name:%s x:%f y:%f o_width:%d o_height:%d\n",
                    output->name, output->pos.c.x, output->pos.c.y, output->width, output->height);
     }
 
@@ -2238,6 +2238,40 @@ static int load_id_agent_module(struct ivishell *shell)
     return 0;
 }
 
+static int load_art_input_policy_module(struct ivishell *shell)
+{
+    int return_code = -1;
+    struct weston_config *config = wet_get_config(shell->compositor);
+    struct weston_config_section *section;
+    char *input_policy_module = NULL;
+
+    int (*input_policy_module_init)(struct ivishell *shell) = NULL;
+
+    section = weston_config_get_section(config, "ivi-shell", NULL, NULL);
+
+    if (weston_config_section_get_string(section, "ivi-art-input-policy-module",
+                                         &input_policy_module, NULL) < 0) {
+        /* input policy shall follow weston default */
+        weston_log("ivi-controller: No ivi-art-input-policy-module set\n");
+        return_code = 0;
+    } else {
+        input_policy_module_init = weston_load_module(input_policy_module, "art_input_policy_module_init", MODULEDIR);
+        if (!input_policy_module_init) {
+            weston_log("ivi-controller: Loading of art-input-policy module fails\n");
+        }
+        else if (input_policy_module_init(shell) != 0) {
+            weston_log("ivi-controller: Initialization of art-input-policy module failed\n");
+        } else {
+            return_code = 0;
+        }
+
+        if (input_policy_module)
+        free(input_policy_module);
+    }
+
+    return return_code;
+}
+
 WL_EXPORT int
 wet_module_init(struct weston_compositor *compositor,
 		       int *argc, char *argv[])
@@ -2290,6 +2324,11 @@ wet_module_init(struct weston_compositor *compositor,
 
     if (load_id_agent_module(shell) < 0) {
         weston_log("ivi-controller: id-agent module not loaded\n");
+    }
+
+    /* Load Art Specific Modules, to setup input policy */
+    if (load_art_input_policy_module(shell) < 0) {
+        weston_log("ivi-controller: art-input-policy module not loaded\n");
     }
 
     /* add ivi-shell destroy signal after loading input

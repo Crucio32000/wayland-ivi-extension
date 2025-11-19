@@ -807,18 +807,18 @@ input_ctrl_touch_clear_focus(struct seat_ctx *ctx_seat)
 }
 
 static void
-touch_grab_down(struct weston_touch_grab *grab, const struct timespec *time,
-                int touch_id, wl_fixed_t x, wl_fixed_t y)
+touch_grab_down(struct weston_touch_grab *grab,
+			const struct timespec *time,
+			int touch_id,
+			struct weston_coord_global coord)
 {
     struct seat_ctx *seat = wl_container_of(grab, seat, touch_grab);
-    struct weston_coord_global pos;
 
     /* if touch device has no focused view, there is nothing to do*/
     if (grab->touch->focus == NULL)
         return;
 
-    pos.c = weston_coord_from_fixed(x, y);
-    input_ctrl_touch_set_west_focus(seat, grab->touch, time, touch_id, pos);
+    input_ctrl_touch_set_west_focus(seat, grab->touch, time, touch_id, coord);
 }
 
 static void
@@ -844,12 +844,9 @@ touch_grab_up(struct weston_touch_grab *grab, const struct timespec *time,
 
 static void
 touch_grab_motion(struct weston_touch_grab *grab, const struct timespec *time, int touch_id,
-                  wl_fixed_t x, wl_fixed_t y)
+                  struct weston_coord_global coord)
 {
-    struct weston_coord_global pos;
-
-    pos.c = weston_coord_from_fixed(x, y);
-    weston_touch_send_motion(grab->touch, time, touch_id, pos);
+    weston_touch_send_motion(grab->touch, time, touch_id, coord);
 }
 
 static void
