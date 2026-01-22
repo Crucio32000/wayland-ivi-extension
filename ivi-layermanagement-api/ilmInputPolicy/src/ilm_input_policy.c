@@ -60,6 +60,8 @@ ilm_addInputRectangle(t_ilm_surface surfaceID,
     /* Check if surface identifier is valid and bound to an existing surface */
     if (verify_surface_id_exists(ctx, surfaceID) == 0) {
         fprintf(stderr, "surface ID %d not found\n", surfaceID);
+    } else if (ctx->wl.art_input_policy_controller == NULL) {
+        fprintf(stderr, "art_input_policy_controller not initialized\n");
     } else {
 
         /* Surface found. Lets forward the request to the compositor */
@@ -91,6 +93,8 @@ ilm_clearInputRegions(t_ilm_surface surfaceID) {
     /* Check if surface identifier is valid and bound to an existing surface */
     if (verify_surface_id_exists(ctx, surfaceID) == 0) {
         fprintf(stderr, "surface ID %d not found\n", surfaceID);
+    } else if (ctx->wl.art_input_policy_controller == NULL) {
+        fprintf(stderr, "art_input_policy_controller not initialized\n");
     } else {
 
         /* Surface found. Lets forward the request to the compositor */
@@ -118,6 +122,8 @@ ilm_resetInputRegions(t_ilm_surface surfaceID) {
     /* Check if surface identifier is valid and bound to an existing surface */
     if (verify_surface_id_exists(ctx, surfaceID) == 0) {
         fprintf(stderr, "surface ID %d not found\n", surfaceID);
+    } else if (ctx->wl.art_input_policy_controller == NULL) {
+        fprintf(stderr, "art_input_policy_controller not initialized\n");
     } else {
 
         /* Surface found. Lets forward the request to the compositor */
@@ -145,6 +151,8 @@ ilm_commitInputRegion(t_ilm_surface surfaceID) {
     /* Check if surface identifier is valid and bound to an existing surface */
     if (verify_surface_id_exists(ctx, surfaceID) == 0) {
         fprintf(stderr, "surface ID %d not found\n", surfaceID);
+    } else if (ctx->wl.art_input_policy_controller == NULL) {
+        fprintf(stderr, "art_input_policy_controller not initialized\n");
     } else {
 
         /* Surface found. Lets forward the request to the compositor */
