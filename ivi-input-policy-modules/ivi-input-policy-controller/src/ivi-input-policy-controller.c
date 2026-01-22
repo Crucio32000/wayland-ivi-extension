@@ -155,7 +155,55 @@ get_west_surface_from_id(struct art_input_policy_context *ctx,
 
     west_surf = interface->surface_get_weston_surface(layout_surface);
 
+    /* Get main surface. Libweston, iteratively, goes up to the parent */
+    west_surf = weston_surface_get_main_surface(west_surf);
+
     return west_surf;
+}
+
+/*  Currently unused, but kept here for future reference. 
+    At the moment, when a touch event is occurring while clearing the input regions, the event is not interrupted.
+    Therefore the touch focus remains on the surface until the touch is released.
+    This function tried to check if the current surface has a touch event ongoing and tried to cancel it.
+    It works when num_tp == 1.
+*/
+void clear_surface_focus(struct art_input_policy_context *ctx,
+        uint32_t ivi_surf_id)
+{
+    /* TODO: I am unable to pinpoint the seat assigned to the surface, therefore get compositor pointer and remove focus for all seats */
+    struct weston_compositor *compositor = ctx->ivishell->compositor;
+    struct weston_seat *seat;
+    struct weston_surface* focused_surface;
+    struct weston_surface *west_surf = get_west_surface_from_id(ctx, ivi_surf_id);
+
+    /* Should never occur */
+    if (NULL == west_surf) {
+        PRIV_WLOG("No weston surface found for surface id %u. Cannot clear focus\n", ivi_surf_id);
+        return;
+    }
+
+    wl_list_for_each(seat, &compositor->seat_list, link) {
+        struct weston_touch *touch = weston_seat_get_touch(seat);
+
+        if (NULL != touch) {
+            /* We should check if this seat is currently in focus, and if the surface in focus belongs to the surface id */
+            if (touch->focus == NULL)
+                continue;
+
+            focused_surface = weston_surface_get_main_surface(touch->focus->surface);
+            
+            /* This condition is true while there is an ongoing touch event on the surface. */
+            /* TODO: Check that grab_pos falls in the input region, otherwise do not clear focus */
+            if (focused_surface == west_surf) {
+                PRIV_WLOG("Clearing touch focus for surface id %u. Touch Grab ID %u\n", ivi_surf_id, touch->grab_touch_id);
+                touch->grab->interface->up(touch->grab, &touch->grab_time,
+                                           touch->grab_touch_id);
+                //weston_touch_set_focus(touch, NULL);
+            }
+        }
+    }
+
+    
 }
 
 static void dump_input_region_from_surface(struct weston_surface *w_surf, uint8_t dump_current_region)
@@ -302,6 +350,13 @@ void impl_add_input_rectangle(struct wl_client *client,
                   surface_id, x, y, width, height);
     }
 
+    /* Check if ID maps to a valid weston surface */
+    if (west_surf == NULL) {
+        PRIV_WLOG("  Warning: Surface ID %u does not map to a valid weston surface. Ignoring add_input_rectangle request.\n",
+                  surface_id);
+        return;
+    }
+
     /* Add input rectangle*/
     /* Verify region is already initialized, otherwise do it now */
     if (pixman_region32_not_empty(&west_surf->pending.input) == 0) {
@@ -323,9 +378,16 @@ void impl_clear_input_regions(struct wl_client *client,
         PRIV_WLOG("Client requested to clear input regions for surface ID %u\n", surface_id);
     }
 
+    /* Check if ID maps to a valid weston surface */
+    if (west_surf == NULL) {
+        PRIV_WLOG("  Warning: Surface ID %u does not map to a valid weston surface. Ignoring clear request.\n",
+                  surface_id);
+        return;
+    }
+
     /* Clear input region */
-    pixman_region32_fini(&west_surf->pending.input);
-    pixman_region32_init(&west_surf->pending.input);
+    /* See https://lists.freedesktop.org/archives/wayland-devel/2014-June/015709.html */
+    pixman_region32_clear(&west_surf->pending.input);
 }
 
 void impl_reset_input_region(struct wl_client *client,
@@ -337,6 +399,13 @@ void impl_reset_input_region(struct wl_client *client,
 
     if (ctx->request_log_enabled) {
         PRIV_WLOG("Client requested to reset input region for surface ID %u\n", surface_id);
+    }
+
+    /* Check if ID maps to a valid weston surface */
+    if (west_surf == NULL) {
+        PRIV_WLOG("  Warning: Surface ID %u does not map to a valid weston surface. Ignoring reset request.\n",
+                  surface_id);
+        return;
     }
 
     /* Reset input region to full surface */
@@ -357,10 +426,22 @@ void impl_commit_input_region(struct wl_client *client,
         PRIV_WLOG("Client requested to commit input region changes for surface ID %u\n", surface_id);
         dump_input_region_from_surface(west_surf, 0); /* pending region */
     }
-    
-    /* Commit the changes by indicating that pending region is DIRTY */
-    west_surf->pending.status |= WESTON_SURFACE_DIRTY_INPUT;
-    ctx->ivishell->interface->commit_changes();
+
+    /* Check if ID maps to a valid weston surface */
+    if (west_surf == NULL) {
+        PRIV_WLOG("  Warning: Surface ID %u does not map to a valid weston surface. Ignoring commit request.\n",
+                  surface_id);
+        return;
+    }
+
+    /* TEST */
+    /* Manually copy pending input region to current */
+    pixman_region32_fini(&west_surf->input);
+    pixman_region32_init(&west_surf->input);
+    pixman_region32_copy(&west_surf->input, &west_surf->pending.input);
+
+    /* Trigger a repaint/update */
+    weston_surface_damage(west_surf);
 }
 
 static const struct ivi_input_policy_interface art_input_implementation = {
@@ -383,7 +464,7 @@ bind_ivi_input_policy(struct wl_client *client, void *data,
     struct art_input_policy_context *ctx = (struct art_input_policy_context *)data;
     struct wl_resource *resource;
 
-    /* We should check version here. Client may bind to a wrong version */
+    /* TODO: We should check version here. Client may bind to a wrong version */
 
     /* Implementation based on https://wayland-book.com/registry/server-side.html */
     resource = wl_resource_create(client,
@@ -415,6 +496,7 @@ art_input_policy_module_init(struct ivishell *shell)
         if (wl_global_create(shell->compositor->wl_display,
                               &ivi_input_policy_interface, 1,
                               ctx, bind_ivi_input_policy) != NULL) {
+            PRIV_WLOG("ivi-input-policy-controller module loaded successfully!\n");
             ret = 0;
         } else {
             PRIV_WLOG("Failed to create ivi_input_policy global\n");
