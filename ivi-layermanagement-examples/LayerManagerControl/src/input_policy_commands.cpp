@@ -89,12 +89,12 @@ COMMAND("reset surface <sid> input region")
 {
     t_ilm_surface surfaceid = input->getUint("sid");
 
-    ilmErrorTypes callResult = ilm_clearInputRegions(surfaceid);
+    ilmErrorTypes callResult = ilm_resetInputRegions(surfaceid);
 
     if (ILM_SUCCESS != callResult)
     {
         cout << "LayerManagerService returned: " << ILM_ERROR_STRING(callResult) << "\n";
-        cout << "Failed to clear input regions for surface with ID " << surfaceid << "\n";
+        cout << "Failed to reset input regions for surface with ID " << surfaceid << "\n";
         return;
     }
 }
